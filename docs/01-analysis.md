@@ -134,6 +134,21 @@ Per deep research run: about **$1.36 on V4 Pro**, about **$0.40 on Flash only**.
 | 150 | **$2,265/mo** ($15.10/user) | $3,750 | **$6,750–9,000** |
 | 500 | **$7,451/mo** ($14.90/user) | $12,500 | **$22,500–30,000** |
 
+### Personal-use check (added after review)
+The "Light / Typical / Heavy" table above is **per month**. If you do roughly 100 chats and 2 deep research runs **per day**, multiply by 30:
+
+| Per-run cost assumption | 2 runs/day, per month | 1 run/day, per month | Break-even vs a $20 plan |
+|---|---|---|---|
+| V4 Pro, my guess (1.5M in / 60k out) | **$85** | $45 | 12 runs/mo |
+| Flash, my guess | **$28** | $16 | 41 runs/mo |
+| V4 Pro, lean (500k in / 30k out) | $34 | $19 | 32 runs/mo |
+| Flash, lean | $13 | $9 | 100 runs/mo |
+
+- Chat is almost free (about $3.70/mo for 100 chats a day). **Deep research is the whole bill.**
+- A $20 ChatGPT plan is flat, but deep research on it is capped. The most-cited cap is about 25 runs/month (about 250 on Pro) [secondary, not on OpenAI's pricing page; check the in-app counter].
+- Tokens per deep research run are **my guess**, not measured. This is the biggest uncertainty and needs a real test run.
+- On cost alone, for one person, this is **not clearly better than a $20 plan**. The case for building rests on control, model choice, context handling and no caps, or on the commercial angle.
+
 ### Is it commercializable?
 **Cheaper on raw cost, but price alone is a weak pitch.**
 - At 150+ seats, raw cost is about 3–4x below ChatGPT Enterprise. That leaves room for a good margin even at $25–30/seat.
