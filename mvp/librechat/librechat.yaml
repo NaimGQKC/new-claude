@@ -19,6 +19,7 @@ interface:
   customWelcome: "Hola, ¿en qué te puedo ayudar hoy?"
   landingFooter: false
   mascot: false
+  buildInfo: false
   temporaryChat: true         # a "chat that is not saved" option
   sharedLinks: true
 

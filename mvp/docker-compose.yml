@@ -16,7 +16,7 @@ services:
     restart: unless-stopped
 
   librechat:
-    image: ghcr.io/danny-avila/librechat:v0.8.9
+    image: ghcr.io/danny-avila/librechat:v0.8.7
     depends_on: [mongo, tools]
     env_file: .env
     environment:
@@ -24,6 +24,8 @@ services:
       LITELLM_BASE_URL: http://litellm:4000/v1
       LITELLM_API_KEY: ${LITELLM_MASTER_KEY}
       TOOLS_BASE_URL: http://tools:8000/v1
+      APP_TITLE: ${APP_TITLE:-Asistente}
+      CUSTOM_FOOTER: "[Mi gasto](/gasto) · Tus datos se quedan en tu espacio"
       DOMAIN_CLIENT: ${PUBLIC_URL:-http://localhost}
       DOMAIN_SERVER: ${PUBLIC_URL:-http://localhost}
     volumes:
