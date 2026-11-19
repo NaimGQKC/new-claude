@@ -1,36 +1,66 @@
-# MVP stack: LibreChat (chat UI) -> LiteLLM (router + cost tracking) -> EU-hosted open models.
-# Images are pinned to exact tags on purpose (LiteLLM PyPI releases 1.82.7/1.82.8 were compromised
-# in March 2026; we only run the official Docker image, never `pip install litellm`).
+# Whole product in one stack:
+#   Browser -> Caddy (https) -> LibreChat (chat screen) -> tools (smart front door, research, documents, "Mi gasto")
+#                                                       -> LiteLLM (model router + cost tracking) -> open models
+# Images are pinned to exact tags on purpose (LiteLLM PyPI releases 1.82.7/1.82.8 were compromised in
+# March 2026; we only run the official Docker image, never `pip install litellm`).
 services:
+  caddy:
+    image: caddy:2
+    ports: ["80:80", "443:443"]
+    environment:
+      DOMAIN: ${DOMAIN:-localhost}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+    depends_on: [librechat, tools]
+    restart: unless-stopped
+
   librechat:
     image: ghcr.io/danny-avila/librechat:v0.8.9
-    depends_on: [mongo, litellm]
-    ports: ["3080:3080"]
+    depends_on: [mongo, tools]
     env_file: .env
     environment:
       MONGO_URI: mongodb://mongo:27017/LibreChat
       LITELLM_BASE_URL: http://litellm:4000/v1
       LITELLM_API_KEY: ${LITELLM_MASTER_KEY}
+      TOOLS_BASE_URL: http://tools:8000/v1
+      DOMAIN_CLIENT: ${PUBLIC_URL:-http://localhost}
+      DOMAIN_SERVER: ${PUBLIC_URL:-http://localhost}
     volumes:
       - ./librechat/librechat.yaml:/app/librechat.yaml:ro
       - librechat_uploads:/app/uploads
     restart: unless-stopped
 
-  mongo:
-    image: mongo:7
-    volumes: [mongo_data:/data/db]
+  tools:   # smart front door + deep research + document creation + "Mi gasto" page
+    build: ./tools
+    depends_on: [litellm]
+    environment:
+      GATEWAY_URL: http://litellm:4000
+      GATEWAY_KEY: ${LITELLM_MASTER_KEY}
+      PUBLIC_URL: ${PUBLIC_URL:-http://localhost}
+      MARKUP: ${MARKUP:-0.30}
+      EUR_PER_USD: ${EUR_PER_USD:-0.92}
+      BRAVE_API_KEY: ${BRAVE_API_KEY:-}
+      FILES_DIR: /data/files
+    volumes: [tools_files:/data/files]
+    expose: ["8000"]
     restart: unless-stopped
 
   litellm:
     image: ghcr.io/berriai/litellm:v1.110.1
     command: ["--config", "/app/config.yaml", "--port", "4000"]
-    env_file: .env
     environment:
       DATABASE_URL: postgresql://litellm:${POSTGRES_PASSWORD}@postgres:5432/litellm
+      LITELLM_MASTER_KEY: ${LITELLM_MASTER_KEY}
+      OPENROUTER_API_KEY: ${OPENROUTER_API_KEY}
     depends_on: [postgres]
     volumes: ["./litellm/config.yaml:/app/config.yaml:ro"]
-    # Not published to the internet: only LibreChat talks to it.
-    expose: ["4000"]
+    expose: ["4000"]      # not published to the internet: only our own services talk to it
+    restart: unless-stopped
+
+  mongo:
+    image: mongo:7
+    volumes: [mongo_data:/data/db]
     restart: unless-stopped
 
   postgres:
@@ -42,4 +72,4 @@ services:
     volumes: [pg_data:/var/lib/postgresql/data]
     restart: unless-stopped
 
-volumes: {librechat_uploads: {}, mongo_data: {}, pg_data: {}}
+volumes: {librechat_uploads: {}, mongo_data: {}, pg_data: {}, tools_files: {}, caddy_data: {}}

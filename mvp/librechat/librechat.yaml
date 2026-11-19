@@ -1,24 +1,54 @@
 version: 1.3.0
 cache: true
 
+# Everything below is about one thing: a screen a non-technical person understands in 10 seconds.
 interface:
-  modelSelect: false        # users never pick a model
-  parameters: false
+  modelSelect: false          # nobody picks a model
+  parameters: false           # no sliders or settings
   presets: false
+  bookmarks: false
+  multiConvo: false
+  prompts: false
+  agents: false
+  marketplace: {use: false}
+  runCode: false
+  webSearch: false            # our own research does this, with sources
+  fileSearch: false
+  contextUsage: false
+  landingHeading: greeting
+  customWelcome: "Hola, ¿en qué te puedo ayudar hoy?"
+  landingFooter: false
+  mascot: false
+  temporaryChat: true         # a "chat that is not saved" option
+  sharedLinks: true
+
+# Remembers useful facts about the user between chats (cheap model, runs in the background).
+memory:
+  tokenLimit: 2000
+  personalize: true
+  agent:
+    enabled: true
+    provider: "LiteLLM"
+    model: "fast"
 
 endpoints:
   custom:
-    - name: "LiteLLM"
+    - name: "Herramientas"          # front door: normal chat -> model router, files -> document maker
+      apiKey: "tools"
+      baseURL: "${TOOLS_BASE_URL}"
+      models: {default: ["asistente", "deep-research", "crear-documento"], fetch: false}
+      titleConvo: true
+      titleModel: "asistente"
+      customParams:
+        reasoningKey: reasoning_content
+    - name: "LiteLLM"               # direct line to the router for "Pensar más"
       apiKey: "${LITELLM_API_KEY}"
       baseURL: "${LITELLM_BASE_URL}"
-      models:
-        default: ["auto", "auto-think"]
-        fetch: false
+      models: {default: ["auto", "auto-think", "fast"], fetch: false}
       titleConvo: true
       titleModel: "fast"
-      modelDisplayLabel: "Asistente"
       customParams:
-        reasoningKey: reasoning_content   # shows the model's reasoning when it sends it
+        reasoningKey: reasoning_content
 
 modelSpecs:
   enforce: true
@@ -26,10 +56,26 @@ modelSpecs:
   list:
     - name: "asistente"
       label: "Asistente"
+      description: "Pregunta lo que quieras. Elijo la mejor forma de ayudarte."
       default: true
-      description: "Responde rápido y elige solo la mejor forma de ayudarte."
-      preset: {endpoint: "LiteLLM", model: "auto"}
+      showOnLanding: true
+      hideBadgeRow: true
+      memory: true
+      conversation_starters:
+        - "Escribe un email para confirmar una cita con un cliente"
+        - "Resume un documento que voy a adjuntar"
+        - "Hazme una hoja de cálculo para controlar mis gastos del mes"
+        - "Explícame esto con palabras sencillas: "
+      preset: {endpoint: "Herramientas", model: "asistente", modelLabel: "Asistente"}
     - name: "pensar-mas"
       label: "Pensar más"
-      description: "Se toma más tiempo y razona con más cuidado."
-      preset: {endpoint: "LiteLLM", model: "auto-think"}
+      description: "Se toma más tiempo y razona con más cuidado. Para temas difíciles."
+      hideBadgeRow: true
+      preset: {endpoint: "LiteLLM", model: "auto-think", modelLabel: "Pensar más"}
+    - name: "investigacion"
+      label: "Investigación profunda"
+      description: "Busca en internet, lee muchas páginas y te da un informe con fuentes. Tarda unos minutos."
+      hideBadgeRow: true
+      conversation_starters:
+        - "Investiga cómo han cambiado los precios de las clínicas de fisioterapia en España"
+      preset: {endpoint: "Herramientas", model: "deep-research", modelLabel: "Investigación profunda"}

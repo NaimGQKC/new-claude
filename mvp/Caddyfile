@@ -1,0 +1,12 @@
+# Automatic https for a real domain (set DOMAIN in .env); plain http on localhost.
+{$DOMAIN:localhost} {
+	handle /gasto* {
+		reverse_proxy tools:8000
+	}
+	handle /files/* {
+		reverse_proxy tools:8000
+	}
+	handle {
+		reverse_proxy librechat:3080
+	}
+}

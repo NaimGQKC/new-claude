@@ -37,6 +37,9 @@ MOCK = {  # fake answers so the plumbing can be tested for free
     "read": lambda u: json.dumps([{"claim": "Fake claim from page", "quote": u.split("PAGE:\n", 1)[-1][200:260]}]),
     "write": lambda u: "Informe de prueba (modelo falso). Dato de ejemplo [1].",
     "check": lambda u: "[]",
+    "document": lambda u: json.dumps({"type": "docx", "title": "Documento de prueba", "blocks": [
+        {"t": "h", "text": "Resumen", "level": 1}, {"t": "p", "text": "Texto de ejemplo."}, {"t": "ul", "items": ["Uno", "Dos"]},
+        {"t": "table", "header": ["Concepto", "Importe"], "rows": [["A", "10"], ["B", "20"]]}]}),
 }
 
 # ---------- search + fetch ----------------------------------------------------------------
