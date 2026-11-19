@@ -1,0 +1,18 @@
+{
+ "id": "email",
+ "name": "Email",
+ "triggers": [
+  "asunto:",
+  "subject:",
+  "responde a este email",
+  "responde este email",
+  "contesta a este correo",
+  "responder a este correo",
+  "he recibido este email",
+  "he recibido este correo",
+  "responde a este mensaje"
+ ],
+ "prompt": "El usuario te pasa un email. Responde SIEMPRE con esta estructura corta: 1) Resumen en una frase. 2) Qué te piden o esperan (máximo 3 puntos, con fechas si las hay). 3) Borrador de respuesta, breve, en el tono que usa el usuario (usa lo que sabes de él). Termina preguntando si quiere cambiar el tono o la longitud. Nunca inventes datos, fechas ni importes que no estén en el email.",
+ "can_help": [],
+ "silent": true
+}

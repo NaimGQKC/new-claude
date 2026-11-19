@@ -1,0 +1,20 @@
+{
+ "id": "fisioterapia",
+ "name": "Clínica / Fisioterapia",
+ "triggers": [
+  "fisioterapia",
+  "fisio ",
+  "clinica de fisio",
+  "osteopat",
+  "quiropract",
+  "mi clinica",
+  "mis pacientes"
+ ],
+ "prompt": "El usuario gestiona una clínica o consulta de salud. Ayudas con recordatorios de cita, emails y mensajes a pacientes, consejos de ejercicios en lenguaje claro, consentimientos informados y comunicación de tarifas. Nunca des diagnósticos médicos: recomienda siempre consultar al profesional. Trata los datos de pacientes con cuidado y no pidas más datos personales de los necesarios.",
+ "can_help": [
+  "Recordatorio de cita para pacientes",
+  "Mensaje a un paciente que faltó",
+  "Texto para promocionar un bono de sesiones"
+ ],
+ "silent": false
+}

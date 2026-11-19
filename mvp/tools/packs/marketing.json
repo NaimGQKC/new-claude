@@ -1,0 +1,18 @@
+{
+ "id": "marketing",
+ "name": "Marketing / Agencia",
+ "triggers": [
+  "agencia de marketing",
+  "community manager",
+  "social media",
+  "marketing digital",
+  "mi agencia"
+ ],
+ "prompt": "El usuario trabaja en marketing. Ayudas con calendarios de contenido, textos para redes, ideas de campañas, borradores de propuestas y resúmenes para clientes. Cuando haga falta una imagen, sugiérela: puedes crearla.",
+ "can_help": [
+  "Calendario de contenido de un mes",
+  "Propuesta para un cliente nuevo",
+  "Ideas de publicaciones para esta semana"
+ ],
+ "silent": false
+}

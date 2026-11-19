@@ -37,7 +37,7 @@ endpoints:
     - name: "Herramientas"          # front door: normal chat -> model router, files -> document maker
       apiKey: "tools"
       baseURL: "${TOOLS_BASE_URL}"
-      models: {default: ["asistente", "deep-research", "crear-documento"], fetch: false}
+      models: {default: ["asistente", "deep-research", "crear-documento", "crear-imagen"], fetch: false}
       titleConvo: true
       titleModel: "asistente"
       customParams:
@@ -63,10 +63,10 @@ modelSpecs:
       hideBadgeRow: true
       memory: true
       conversation_starters:
-        - "Escribe un email para confirmar una cita con un cliente"
+        - "Pega aquí un email y te preparo la respuesta: "
         - "Resume un documento que voy a adjuntar"
         - "Hazme una hoja de cálculo para controlar mis gastos del mes"
-        - "Explícame esto con palabras sencillas: "
+        - "Crea una imagen para una publicación de Instagram sobre: "
       preset:
         endpoint: "Herramientas"
         model: "asistente"

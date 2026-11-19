@@ -22,6 +22,10 @@ It asks for your OpenRouter key and (optionally) a domain, creates all secrets, 
 ## What the user sees
 - **Asistente**: normal chat. The router sends easy questions to a cheap model and hard ones to a stronger one.
   Asking for a file ("hazme una hoja de cálculo...", "prepara una presentación...") creates a real file with a download link.
+- **Images**: "crea una imagen para un post de Instagram sobre..." makes a simple marketing image (closed Google model, about $0.04 each; no open image model is on OpenRouter).
+- **Industry packs** (`tools/packs/*.json`): when the user (or memory) says they work in real estate, a clinic, a law office, accounting, hospitality, retail or marketing, the matching pack switches on by itself: better instructions and a one-time "Modo X activado" line. Packs are plain prompt files (no code), so adding a vetted community pack means dropping in one JSON file.
+- **Email without a connector**: paste an email and the assistant gives a one-line summary, what is asked, and a draft reply in the user's tone (from memory).
+- **Reading documents**: long attached text goes to the cheap long-context model; only legal/financial analysis goes to the strong one. Decisions are logged (one JSON line per message) so we can tune the rules.
 - **Pensar más**: always the strongest model, slower.
 - **Investigación profunda**: plans searches, reads many pages, writes a cited report, flags claims the sources don't support.
 - **Memory**, **Projects**, **export chat**, voice input and file upload come from LibreChat.
@@ -39,6 +43,7 @@ The MVP runs on OpenRouter: use fake or non-sensitive data until we move to an E
 
 ## Tests
 - `python3 -I tests/route_test.py`: sends sample prompts through the router and prints model, tokens, cost (spends a few cents).
+- `python3 -I tests/test_frontdoor.py`: 17 free checks of file/image/pack/model decisions.
 - `RESEARCH_DRY=1` runs the tools service with fake models and real page fetching (no spend).
 
 ## Status (2026-11-19)

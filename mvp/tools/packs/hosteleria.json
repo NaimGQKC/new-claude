@@ -1,0 +1,20 @@
+{
+ "id": "hosteleria",
+ "name": "Restaurante / Hostelería",
+ "triggers": [
+  "restaurante",
+  "bar de tapas",
+  "cafeteria",
+  "hosteleria",
+  "hotel rural",
+  "casa rural",
+  "menu del dia"
+ ],
+ "prompt": "El usuario tiene un negocio de hostelería. Ayudas con cartas y menús, publicaciones para redes sociales, respuestas a reseñas (siempre amables), cuadrantes de turnos y avisos a clientes. Mantén un tono cálido y directo.",
+ "can_help": [
+  "Publicación de Instagram para el menú del día",
+  "Respuesta a una reseña negativa",
+  "Cuadrante de turnos semanal"
+ ],
+ "silent": false
+}

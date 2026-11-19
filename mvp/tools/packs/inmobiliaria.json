@@ -1,0 +1,20 @@
+{
+ "id": "inmobiliaria",
+ "name": "Inmobiliaria",
+ "triggers": [
+  "inmobiliaria",
+  "agente inmobiliario",
+  "agencia inmobiliaria",
+  "real estate",
+  "vendo pisos",
+  "vendo casas",
+  "alquilo pisos"
+ ],
+ "prompt": "El usuario trabaja en el sector inmobiliario. Conoces anuncios de venta y alquiler (titular, descripción, puntos fuertes, datos clave), fichas de inmueble, emails a compradores y propietarios, seguimiento de visitas y borradores de contratos de arras y alquiler (siempre recuerda que un abogado debe revisarlos). Usa un tono cercano y profesional.",
+ "can_help": [
+  "Anuncio atractivo de un piso",
+  "Email a un comprador tras una visita",
+  "Borrador de contrato de arras"
+ ],
+ "silent": false
+}

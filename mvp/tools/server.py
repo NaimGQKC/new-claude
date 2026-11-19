@@ -3,37 +3,22 @@ It streams progress lines while the research runs, then the final report with so
 import json, os, threading, queue, time, urllib.parse
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 import re, unicodedata, urllib.error, urllib.request
-import research, documents, usage
+import research, documents, images, usage, frontdoor
+from frontdoor import last_user, transcript
 
 GATEWAY, KEY = usage.GATEWAY, usage.KEY
-VERB = r"(haz(me)?|crea(me)?|genera(me)?|prepara(me)?|redacta(me)?|monta(me)?|necesito|quiero|dame|make|create|generate|draft|prepare)"
-NOUN = r"(excel|hoja de calculo|spreadsheet|word|\.docx|pdf|presentacion|powerpoint|ppt|diapositivas|slides|plantilla|documento|contrato|presupuesto|factura)"
-
-def wants_document(msgs):
-    """Free keyword check, so the user never has to pick 'create a file' from a menu."""
-    if re.search(r"title for the conversation|5-word|5 words or less|memory", last_user(msgs).lower()):
-        return False  # background jobs (conversation titles, memory) must never create files
-    last = "".join(c for c in unicodedata.normalize("NFD", last_user(msgs).lower()) if unicodedata.category(c) != "Mn")
-    prev = [m for m in msgs if m.get("role") == "assistant"]
-    if prev and "Tu documento:" in text_of(prev[-1]["content"]) and len(last) < 300:
-        return True   # follow-up edit of the file we just made ("hazlo más corto")
-    return bool(re.search(VERB + r".{0,60}" + NOUN, last))
-
 FILES_DIR = documents.FILES_DIR
 FLOWS = {  # model name -> function(conversation_messages, progress, cost) -> final markdown
     "deep-research": lambda msgs, progress, cost: "\n---\n\n" + research.render(*research.run(last_user(msgs), progress=progress, cost=cost), cost),
     "crear-documento": lambda msgs, progress, cost: "\n---\n\n" + documents.create(transcript(msgs), progress, cost),
+    "crear-imagen": lambda msgs, progress, cost: "\n---\n\n" + images.create(transcript(msgs), progress, cost),
 }
 
-def text_of(c):
-    return " ".join(p.get("text", "") for p in c if isinstance(p, dict)) if isinstance(c, list) else (c or "")
+text_of_system = lambda m: frontdoor.text_of(m.get("content"))
 
-def last_user(msgs):
-    u = [m for m in msgs if m.get("role") == "user"]
-    return text_of(u[-1]["content"]) if u else ""
-
-def transcript(msgs):
-    return "\n\n".join(f"{m['role'].upper()}: {text_of(m['content'])[:6000]}" for m in msgs if m.get("role") in ("user", "assistant"))[-20000:]
+def sse_chunk(text, finish=None, model="asistente"):
+    return "data: " + json.dumps({"id": "dr-1", "object": "chat.completion.chunk", "created": int(time.time()), "model": model,
+        "choices": [{"index": 0, "delta": {"content": text} if text else {}, "finish_reason": finish}]}) + "\n\n"
 
 class H(BaseHTTPRequestHandler):
     def _json(self, code, obj):
@@ -58,8 +43,15 @@ class H(BaseHTTPRequestHandler):
             return self._json(404, {"error": "not found"})
         self._json(200, {"status": "ok"})
 
-    def passthrough(self, req, model):
+    def passthrough(self, req, model, system="", notice=""):
         req = dict(req, model=model)
+        if system:   # industry pack instructions go first
+            msgs = list(req.get("messages", []))
+            if msgs and msgs[0].get("role") == "system":
+                msgs[0] = dict(msgs[0], content=text_of_system(msgs[0]) + "\n\n" + system)
+            else:
+                msgs.insert(0, {"role": "system", "content": system})
+            req["messages"] = msgs
         r = urllib.request.Request(GATEWAY + "/v1/chat/completions", json.dumps(req).encode(),
                                    {"Content-Type": "application/json", "Authorization": "Bearer " + KEY})
         try:
@@ -70,6 +62,8 @@ class H(BaseHTTPRequestHandler):
             return self._json(502, {"error": {"message": f"No se pudo contactar con el modelo: {e}"}})
         self.send_response(200); self.send_header("Content-Type", resp.headers.get("Content-Type", "application/json"))
         self.send_header("Cache-Control", "no-cache"); self.end_headers()
+        if notice and req.get("stream"):
+            self.wfile.write(sse_chunk(notice).encode()); self.wfile.flush()
         while chunk := resp.read1(8192) if hasattr(resp, "read1") else resp.read(8192):
             self.wfile.write(chunk); self.wfile.flush()
 
@@ -79,10 +73,12 @@ class H(BaseHTTPRequestHandler):
         req = json.loads(self.rfile.read(int(self.headers.get("Content-Length", 0))) or b"{}")
         msgs = req.get("messages", [])
         model = req.get("model")
-        if model == "asistente":   # front door for normal chat: files go to our tools, the rest to the model router
-            if not wants_document(msgs):
-                return self.passthrough(req, "auto")
-            model = "crear-documento"
+        if model == "asistente":   # front door: files and images go to our tools, the rest to the cheapest fitting model
+            d = frontdoor.decide(msgs)
+            frontdoor.log(d)
+            if d["action"] == "chat":
+                return self.passthrough(req, d["model"], d["system"], d["notice"])
+            model = "crear-documento" if d["action"] == "document" else "crear-imagen"
         elif model not in FLOWS:
             model = "deep-research"
         stream = bool(req.get("stream"))
@@ -98,9 +94,7 @@ class H(BaseHTTPRequestHandler):
             q.put(None)
         threading.Thread(target=work, daemon=True).start()
 
-        def chunk(text, finish=None):
-            return "data: " + json.dumps({"id": "dr-1", "object": "chat.completion.chunk", "created": int(time.time()),
-                "model": "deep-research", "choices": [{"index": 0, "delta": {"content": text} if text else {}, "finish_reason": finish}]}) + "\n\n"
+        chunk = sse_chunk
 
         if stream:
             self.send_response(200); self.send_header("Content-Type", "text/event-stream")
