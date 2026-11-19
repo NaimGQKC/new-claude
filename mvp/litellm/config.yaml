@@ -1,5 +1,6 @@
 # Edit the `model:` IDs below to match what your EU host calls each model.
-# Tiers (research: DS Flash = best value, GLM = best open writer, Kimi = strongest open model).
+# Tiers (research: DS Flash = best value, GLM = best open writer).
+# Launch host: Mistral EU (serves all three models below). Kimi K3.1 Pro is parked until its license is reviewed.
 model_list:
   # --- real models -------------------------------------------------------
   - model_name: fast            # DeepSeek V4.1 Flash, thinking OFF: simple emails, rewrites, chit-chat
@@ -18,9 +19,9 @@ model_list:
       model: openai/glm-5.3
       api_base: os.environ/EU_API_BASE
       api_key: os.environ/EU_API_KEY
-  - model_name: strong          # Kimi K3.1 Pro: hardest reasoning / "Pensar más"
+  - model_name: strong          # GLM-5.3 at max effort for now; swap to Kimi K3.1 Pro later
     litellm_params:
-      model: openai/kimi-k3.1-pro
+      model: openai/glm-5.3
       api_base: os.environ/EU_API_BASE
       api_key: os.environ/EU_API_KEY
 
@@ -44,7 +45,7 @@ model_list:
       complexity_router_default_model: balanced
   - model_name: auto-think      # the "Pensar más" switch: always the strongest model
     litellm_params:
-      model: openai/kimi-k3.1-pro
+      model: openai/glm-5.3
       api_base: os.environ/EU_API_BASE
       api_key: os.environ/EU_API_KEY
 
