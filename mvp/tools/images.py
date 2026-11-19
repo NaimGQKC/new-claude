@@ -37,8 +37,10 @@ def create(conversation, progress, cost):
     progress("Creando la imagen… (puede tardar medio minuto)")
     png = generate(prompt, cost)
     folder = os.path.join(documents.FILES_DIR, uuid.uuid4().hex[:12]); os.makedirs(folder, exist_ok=True)
-    open(os.path.join(folder, "imagen.png"), "wb").write(png)
-    url = f"{documents.PUBLIC_URL}/files/{os.path.basename(folder)}/imagen.png"
+    ext = "jpg" if png[:3] == b"\xff\xd8\xff" else "webp" if png[8:12] == b"WEBP" else "png"   # the model may return JPEG
+    name = f"imagen.{ext}"
+    open(os.path.join(folder, name), "wb").write(png)
+    url = f"{documents.PUBLIC_URL}/files/{os.path.basename(folder)}/{name}"
     return (f"![Imagen]({url})\n\n**Tu imagen:** [descargar]({url})\n\n"
             f"Si quieres cambios, dímelo (por ejemplo: «más colorida» o «con el texto Ofertas de otoño»).\n\n"
             f"<sub>Descripción usada: {prompt[:600]}</sub>\n")

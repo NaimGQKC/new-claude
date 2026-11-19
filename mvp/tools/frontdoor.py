@@ -41,7 +41,7 @@ def _file_or_image(msgs):
         return "document" if d.end() <= i.end() else "image"
     return "document" if d else "image" if i else None
 
-LEGAL_FIN = r"(clausula|riesgo|contrato|legal|fiscal|impuesto|balance|auditor|demanda|norma|rgpd|laboral|sancion)"
+LEGAL_FIN = r"(clausula|contrato|legal|fiscal|impuesto|balance|auditor|demanda|norma|rgpd|laboral|sancion)"
 ANALYSIS = r"(analiza|revisa|compara|conclusion|riesgo|clausula|por que|que implica|incongruencia|contradic)"
 
 def pick_model(msgs):

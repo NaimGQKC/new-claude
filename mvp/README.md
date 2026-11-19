@@ -47,12 +47,11 @@ The MVP runs on OpenRouter: use fake or non-sensitive data until we move to an E
 - `RESEARCH_DRY=1` runs the tools service with fake models and real page fetching (no spend).
 
 ## Status (2026-11-19)
-Tested: whole stack starts (LibreChat v0.8.7, LiteLLM v1.110.1, Mongo, Postgres, Caddy, tools); LibreChat accepts our config;
-the router picks models as designed; all four file types render and open; document requests are detected automatically;
-"Mi gasto" reads LiteLLM's spend log; the research pipeline runs with fake models and real pages.
-**Not tested with real models yet:** research quality, document content quality, memory. Spanish UI is partial in LibreChat
-(sidebar labels "Projects"/"Chats" stay English). Text size is LibreChat's default (users can zoom with Ctrl +).
-The v0.8.8/0.8.9 LibreChat images are not published, so we pin v0.8.7.
+Tested with real models (about $0.18 total): chat routing, industry pack, pasted email, "Pensar más", Excel/PowerPoint/Word creation,
+image with Spanish text, long-document reading, and two deep research runs with cited reports. See `tests/RESULTS.md` and `samples/`.
+Also tested: the whole Docker stack starts, LibreChat accepts our config, spend page, spending cap, cost estimates, 22 free front-door checks.
+**Not tested:** LibreChat in a browser with real models (memory, titles, file upload), OCR for scans, Windows install, quality vs Claude/Perplexity.
+LibreChat v0.8.8/0.8.9 images are not published, so we pin v0.8.7 (partial Spanish UI; text size is the default, users can zoom with Ctrl +).
 
 ## Next
 Quality test on real prompts (blind vs Claude/Perplexity), Spanish evaluation, pre-built agents/MCP connectors, browser agent,

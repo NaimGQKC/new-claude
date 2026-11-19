@@ -44,7 +44,21 @@ MOCK = {  # fake answers so the plumbing can be tested for free
 }
 
 # ---------- search + fetch ----------------------------------------------------------------
-def search(query, n=4):
+SEARCH_USD = 0.008   # measured: one OpenRouter web search call, 5 results
+
+def search_openrouter(query, n, cost):
+    """Built-in default: OpenRouter's web plugin, called through our gateway (no extra account or key)."""
+    body = json.dumps({"model": "fast", "max_tokens": 1, "messages": [{"role": "user", "content": query}],
+                       "extra_body": {"plugins": [{"id": "web", "max_results": n}], "reasoning": {"enabled": False}}}).encode()
+    req = urllib.request.Request(GATEWAY + "/v1/chat/completions", body, {"Content-Type": "application/json", "Authorization": "Bearer " + KEY})
+    data = json.load(urllib.request.urlopen(req, timeout=120))
+    cost["search"] = cost.get("search", 0.0) + SEARCH_USD
+    ann = data["choices"][0]["message"].get("annotations") or []
+    return [{"title": a["url_citation"].get("title") or a["url_citation"]["url"], "url": a["url_citation"]["url"]}
+            for a in ann if a.get("url_citation", {}).get("url")]
+
+def search(query, n=4, cost=None):
+    cost = {} if cost is None else cost
     if DRY:
         return [{"title": "Wikipedia: Physical therapy", "url": "https://en.wikipedia.org/wiki/Physical_therapy"}]
     if os.environ.get("BRAVE_API_KEY"):
@@ -52,8 +66,14 @@ def search(query, n=4):
         req = urllib.request.Request(url, headers={"X-Subscription-Token": os.environ["BRAVE_API_KEY"], "Accept": "application/json"})
         res = json.load(urllib.request.urlopen(req, timeout=30)).get("web", {}).get("results", [])
         return [{"title": r["title"], "url": r["url"]} for r in res]
-    from ddgs import DDGS
     try:
+        res = search_openrouter(query, n, cost)
+        if res:
+            return res
+    except Exception as e:
+        print(f"  gateway search failed for {query!r}: {e}", file=sys.stderr)
+    try:   # last resort: free scraping search (unreliable)
+        from ddgs import DDGS
         return [{"title": r["title"], "url": r["href"]} for r in DDGS().text(query, max_results=n)]
     except Exception as e:
         print(f"  search failed for {query!r}: {e}", file=sys.stderr)
@@ -90,7 +110,7 @@ def run(question, urls=None, n_queries=4, max_pages=8, planner="strong", reader=
     # 2. search
     found = [{"url": u, "title": u} for u in (urls or [])]
     for q in queries:
-        found += search(q)
+        found += search(q, cost=cost)
     seen, hits = set(), []
     for h in found:
         if h["url"] not in seen:
