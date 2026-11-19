@@ -10,7 +10,7 @@ CASES = [
     (u("Escribe un email para confirmar una cita"), "chat", "auto", []),
     (u("Hazme una hoja de cálculo de gastos"), "document", None, []),
     (u("Prepárame una presentación sobre ventas"), "document", None, []),
-    (u("Crea una imagen para un post de Instagram con una cafetería"), "image", None, ["hosteleria"]),
+    (u("Crea una imagen para un post de Instagram con una cafetería"), "image", None, ["hosteleria", "marketing"]),
     (u("Diséñame un logo para mi tienda"), "image", None, ["comercio"]),
     (u("Crea una imagen para la presentación"), "image", None, []),
     (u("Hazme una presentación con imágenes de casas"), "document", None, []),

@@ -11,6 +11,8 @@ interface:
   prompts: false
   agents: false
   marketplace: {use: false}
+  mcpServers: {use: false, create: false, share: false, public: false}   # no technical connector screen; connectors will appear through chat
+  skills: false
   runCode: false
   webSearch: false            # our own research does this, with sources
   fileSearch: false

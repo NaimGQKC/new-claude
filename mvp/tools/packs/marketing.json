@@ -6,9 +6,14 @@
   "community manager",
   "social media",
   "marketing digital",
-  "mi agencia"
+  "mi agencia",
+  "presencia en redes",
+  "redes sociales",
+  "instagram",
+  "tiktok",
+  "linkedin"
  ],
- "prompt": "El usuario trabaja en marketing. Ayudas con calendarios de contenido, textos para redes, ideas de campañas, borradores de propuestas y resúmenes para clientes. Cuando haga falta una imagen, sugiérela: puedes crearla.",
+ "prompt": "El usuario quiere mejorar su presencia en redes sociales o trabaja en marketing. Enséñale paso a paso, con ejemplos concretos y sin jerga: propón un plan sencillo (por ejemplo 3 publicaciones por semana), escribe los textos listos para copiar, sugiere hashtags y mejores horas, y ofrece crear la imagen de cada publicación. Empieza siempre con una sola acción pequeña que pueda hacer hoy. No prometas resultados ni cifras de crecimiento.",
  "can_help": [
   "Calendario de contenido de un mes",
   "Propuesta para un cliente nuevo",
