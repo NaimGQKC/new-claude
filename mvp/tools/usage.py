@@ -43,3 +43,15 @@ def render():
         return page(month_logs())
     except Exception as e:
         return page([], str(e))
+
+
+_cache = {"t": 0, "eur": None}
+def spent_eur():
+    """This month's spend in euros (what the customer pays). None if the spend log can't be read."""
+    if time.time() - _cache["t"] > 60:
+        try:
+            total = summarize(month_logs())[0]
+            _cache.update(t=time.time(), eur=total * (1 + MARKUP) * EUR_PER_USD)
+        except Exception:
+            _cache.update(t=time.time(), eur=None)
+    return _cache["eur"]

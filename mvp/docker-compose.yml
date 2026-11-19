@@ -41,6 +41,7 @@ services:
       GATEWAY_KEY: ${LITELLM_MASTER_KEY}
       PUBLIC_URL: ${PUBLIC_URL:-http://localhost}
       MARKUP: ${MARKUP:-0.30}
+      MONTHLY_CAP_EUR: ${MONTHLY_CAP_EUR:-0}
       EUR_PER_USD: ${EUR_PER_USD:-0.92}
       BRAVE_API_KEY: ${BRAVE_API_KEY:-}
       FILES_DIR: /data/files

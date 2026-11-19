@@ -88,7 +88,7 @@ CONFIRM_EUR = float(os.environ.get("CONFIRM_EUR", "1.0"))     # ask before spend
 SHOW_EUR = float(os.environ.get("SHOW_EUR", "0.10"))          # mention the estimate above this
 # USD per 1M tokens (input, output) and a typical answer length in tokens (thinking models write more)
 PRICE = {"fast": (0.30, 1.20, 800), "balanced": (0.30, 1.20, 2500), "writer": (1.40, 4.40, 2000),
-         "strong": (3.00, 15.00, 4000), "auto": (0.30, 1.20, 1500)}
+         "strong": (3.00, 15.00, 4000), "auto-think": (3.00, 15.00, 4000), "auto": (0.30, 1.20, 1500)}
 FIXED_EUR = {"deep-research": 0.54, "image": 0.04, "document": 0.01}   # USD-based estimates measured/derived earlier
 CONFIRM_MARK = "¿Quieres que continúe?"
 

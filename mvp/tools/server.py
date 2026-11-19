@@ -7,6 +7,13 @@ import research, documents, images, usage, frontdoor
 from frontdoor import last_user, transcript
 
 GATEWAY, KEY = usage.GATEWAY, usage.KEY
+CAP_EUR = float(os.environ.get("MONTHLY_CAP_EUR", "0"))      # 0 = no cap
+
+def cap_status():
+    """('over'|'near'|'ok', spent). Never blocks when the spend log can't be read."""
+    spent = usage.spent_eur() if CAP_EUR > 0 else None
+    if spent is None: return "ok", spent
+    return ("over" if spent >= CAP_EUR else "near" if spent >= 0.8 * CAP_EUR else "ok"), spent
 FILES_DIR = documents.FILES_DIR
 FLOWS = {  # model name -> function(conversation_messages, progress, cost) -> final markdown
     "deep-research": lambda msgs, progress, cost: "\n---\n\n" + research.render(*research.run(last_user(msgs), progress=progress, cost=cost), cost),
@@ -28,7 +35,7 @@ class H(BaseHTTPRequestHandler):
 
     def do_GET(self):
         if self.path.rstrip("/").endswith("/models"):
-            return self._json(200, {"object": "list", "data": [{"id": m, "object": "model", "owned_by": "local"} for m in ["asistente", *FLOWS]]})
+            return self._json(200, {"object": "list", "data": [{"id": m, "object": "model", "owned_by": "local"} for m in ["asistente", "pensar-mas", *FLOWS]]})
         if self.path.startswith("/gasto"):
             b = usage.render().encode()
             self.send_response(200); self.send_header("Content-Type", "text/html; charset=utf-8")
@@ -81,7 +88,12 @@ class H(BaseHTTPRequestHandler):
         req = json.loads(self.rfile.read(int(self.headers.get("Content-Length", 0))) or b"{}")
         msgs = req.get("messages", [])
         model = req.get("model")
-        if model == "asistente":   # front door: files and images go to our tools, the rest to the cheapest fitting model
+        if model in ("asistente", "pensar-mas", "deep-research", "crear-documento", "crear-imagen"):
+            cap, spent = cap_status()
+            if cap == "over":
+                return self.canned(req, f"Este mes has llegado al límite de gasto que fijaste ({frontdoor.fmt(CAP_EUR)}). "
+                                        "Para seguir, pide a la persona que administra la cuenta que lo amplíe. Tus conversaciones y archivos siguen aquí.")
+        if model in ("asistente", "pensar-mas"):   # front door: files and images go to our tools, the rest to the cheapest fitting model
             msgs, state = frontdoor.resolve_confirmation(msgs)
             if state == "declined":
                 return self.canned(req, "De acuerdo, no lo hago. Si quieres, dime qué parte te interesa y lo hago más pequeño y barato.")
@@ -91,6 +103,10 @@ class H(BaseHTTPRequestHandler):
             if d["action"] == "ask":
                 return self.canned(req, d["ask"])
             if d["action"] == "chat":
+                if model == "pensar-mas":
+                    d["model"] = "auto-think"
+                if cap == "near":
+                    d["notice"] += f"_Ojo: llevas {frontdoor.fmt(spent)} de tu límite mensual de {frontdoor.fmt(CAP_EUR)}._\n\n"
                 return self.passthrough(req, d["model"], d["system"], d["notice"])
             model = "crear-documento" if d["action"] == "document" else "crear-imagen"
         elif model not in FLOWS:

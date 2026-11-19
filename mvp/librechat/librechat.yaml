@@ -18,7 +18,7 @@ interface:
   fileSearch: false
   contextUsage: false
   landingHeading: greeting
-  customWelcome: "Hola, ¿en qué te puedo ayudar hoy?"
+  customWelcome: "Hola. Cuéntame a qué te dedicas y te ayudaré mejor. ¿En qué puedo ayudarte hoy?"
   landingFooter: false
   mascot: false
   buildInfo: false
@@ -39,7 +39,7 @@ endpoints:
     - name: "Herramientas"          # front door: normal chat -> model router, files -> document maker
       apiKey: "tools"
       baseURL: "${TOOLS_BASE_URL}"
-      models: {default: ["asistente", "deep-research", "crear-documento", "crear-imagen"], fetch: false}
+      models: {default: ["asistente", "pensar-mas", "deep-research", "crear-documento", "crear-imagen"], fetch: false}
       titleConvo: true
       titleModel: "asistente"
       customParams:
@@ -79,8 +79,8 @@ modelSpecs:
       description: "Se toma más tiempo y razona con más cuidado. Para temas difíciles."
       hideBadgeRow: true
       preset:
-        endpoint: "LiteLLM"
-        model: "auto-think"
+        endpoint: "Herramientas"
+        model: "pensar-mas"
         modelLabel: "Pensar más"
         promptPrefix: "Responde en español sencillo y sin jerga. Razona con cuidado y explica el resultado de forma clara y ordenada, pero sin alargarte."
     - name: "investigacion"
