@@ -17,6 +17,10 @@ Samples of every output are in `mvp/samples/`.
 | 12 | Analysis of the same document | Worked, but was sent to the strong model because of a keyword bug (fixed: now balanced) | 41 s | ~$0.04 |
 | 13 | Deep research on fixed pages | 10 quote-verified facts, cited report, admits what sources do not say | 51 s | $0.056 |
 | 14 | Deep research with search ("precio de una sesión de fisioterapia en España") | 4 searches, 8 pages, 5 useful, 30 verified facts, cited table, notes that sources disagree | 95 s | $0.119 |
+| 15 | Deep research at the new default depth ("normal": up to 30 pages) | 8 searches, 30 pages found, 19 useful, 89 quote-verified facts; the checker flagged 3 sentences as unsupported | 171 s | $0.204 (about 0,24 EUR with markup) |
+
+Depth levels: `rapida` (8 pages, ~$0.12), `normal` (30 pages, ~$0.20-0.30), `profunda` (100 pages, ~$0.75 estimated, not yet run).
+The user gets `profunda` by writing "a fondo" in the question. Reading pages is cheap (~$0.0012 per page); the writer and searches are what cost.
 
 ## Bugs found and fixed during testing
 - Image saved as `.png` although the model returns JPEG: now detects the real type.

@@ -92,11 +92,21 @@ def norm(s):
     return re.sub(r"\s+", " ", s).strip().lower()
 
 # ---------- pipeline ----------------------------------------------------------------------
-def run(question, urls=None, n_queries=4, max_pages=8, planner="strong", reader="fast", writer="strong", checker="fast",
+# depth -> (searches, results per search, max pages read, rough USD: ~$0.008 per search + ~$0.0015 per page read + writer)
+DEPTHS = {"rapida": (4, 5, 8, 0.12), "normal": (8, 6, 30, 0.30), "profunda": (15, 8, 100, 0.75)}
+
+def choose_depth(question):
+    q = re.sub(r"\s+", " ", question.lower())
+    if re.search(r"a fondo|exhaustiv|profund|muy detallad|todas las fuentes|in depth|thorough", q): return "profunda"
+    if re.search(r"rapid|breve|por encima|quick", q): return "rapida"
+    return "normal"
+
+def run(question, urls=None, depth="normal", planner="strong", reader="fast", writer="strong", checker="fast",
         progress=print, cost=None):
     cost = {} if cost is None else cost
+    n_queries, per_query, max_pages, usd = DEPTHS[depth]
     t0 = time.time()
-    progress("Coste estimado de esta investigación: unos 0,50 € (máximo 1 €).")
+    progress(f"Investigación {depth}: hasta {max_pages} páginas. Coste estimado: unos {usd*1.3*0.92:.2f} €".replace(".", ",", 1) + ".")
     # 1. plan
     if urls:
         queries = []
@@ -110,7 +120,7 @@ def run(question, urls=None, n_queries=4, max_pages=8, planner="strong", reader=
     # 2. search
     found = [{"url": u, "title": u} for u in (urls or [])]
     for q in queries:
-        found += search(q, cost=cost)
+        found += search(q, per_query, cost=cost)
     seen, hits = set(), []
     for h in found:
         if h["url"] not in seen:
@@ -125,11 +135,11 @@ def run(question, urls=None, n_queries=4, max_pages=8, planner="strong", reader=
             return h, []
         out = llm(cost, "read", reader,
                   "Extract facts that help answer the question, using ONLY the page text. Reply ONLY with a JSON list "
-                  "[{\"claim\": \"...\", \"quote\": \"exact sentence copied from the page\"}], max 6 items; [] if nothing useful.",
+                  "[{\"claim\": \"...\", \"quote\": \"exact sentence copied from the page\"}], max 5 items; [] if nothing useful.",
                   f"QUESTION: {question}\n\nPAGE:\n{text}", 3000)
         facts = [f for f in parse_json(out, []) if isinstance(f, dict) and f.get("quote") and norm(f["quote"]) in norm(text)]
         return h, facts
-    with cf.ThreadPoolExecutor(6) as ex:
+    with cf.ThreadPoolExecutor(10) as ex:
         results = list(ex.map(read_page, hits))
     notes, sources = [], []
     for h, facts in results:
@@ -171,10 +181,11 @@ if __name__ == "__main__":
     ap.add_argument("--dry", action="store_true", help="fake models, no spend")
     ap.add_argument("--urls", nargs="*", help="skip search, read these pages")
     ap.add_argument("--writer", default="strong")
+    ap.add_argument("--depth", choices=list(DEPTHS), default=None)
     ap.add_argument("--out", default="report.md")
     a = ap.parse_args()
     DRY = a.dry or DRY
     cost = {}
-    report, sources, issues = run(a.question, a.urls, writer=a.writer, cost=cost)
+    report, sources, issues = run(a.question, a.urls, depth=a.depth or choose_depth(a.question), writer=a.writer, cost=cost)
     open(a.out, "w").write(render(report, sources, issues, cost))
     print(f"saved {a.out}; cost ${sum(cost.values()):.4f}")

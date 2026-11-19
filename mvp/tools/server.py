@@ -16,7 +16,7 @@ def cap_status():
     return ("over" if spent >= CAP_EUR else "near" if spent >= 0.8 * CAP_EUR else "ok"), spent
 FILES_DIR = documents.FILES_DIR
 FLOWS = {  # model name -> function(conversation_messages, progress, cost) -> final markdown
-    "deep-research": lambda msgs, progress, cost: "\n---\n\n" + research.render(*research.run(last_user(msgs), progress=progress, cost=cost), cost),
+    "deep-research": lambda msgs, progress, cost: "\n---\n\n" + research.render(*research.run(last_user(msgs), depth=research.choose_depth(last_user(msgs)), progress=progress, cost=cost), cost),
     "crear-documento": lambda msgs, progress, cost: "\n---\n\n" + documents.create(transcript(msgs), progress, cost),
     "crear-imagen": lambda msgs, progress, cost: "\n---\n\n" + images.create(transcript(msgs), progress, cost),
 }
