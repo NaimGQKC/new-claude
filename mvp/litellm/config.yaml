@@ -1,29 +1,33 @@
-# Edit the `model:` IDs below to match what your EU host calls each model.
-# Tiers (research: DS Flash = best value, GLM = best open writer).
-# Launch host: Mistral EU (serves all three models below). Kimi K3.1 Pro is parked until its license is reviewed.
+# MVP routing config. Host for now: OpenRouter (all models, one key). Use FAKE/non-sensitive data only.
+# To switch host later (OVH, T-Systems, Berget...), change `model:` / `api_base` / `api_key` in each entry below.
+# Model IDs were checked against openrouter.ai/api/v1/models on 2026-11-19.
+#
+# model_info costs = what we use to show the user their spend. They are list prices (USD per token);
+# OpenRouter may charge less if it routes to a cheaper provider. Re-check before launch.
 model_list:
   # --- real models -------------------------------------------------------
   - model_name: fast            # DeepSeek V4.1 Flash, thinking OFF: simple emails, rewrites, chit-chat
     litellm_params:
-      model: openai/deepseek-v4.1-flash          # <-- host's model ID
-      api_base: os.environ/EU_API_BASE
-      api_key: os.environ/EU_API_KEY
+      model: openrouter/deepseek/deepseek-v4.1-flash-1017
+      api_key: os.environ/OPENROUTER_API_KEY
+      extra_body: {reasoning: {enabled: false}}
+    model_info: {input_cost_per_token: 0.0000003, output_cost_per_token: 0.0000012}
   - model_name: balanced        # DeepSeek V4.1 Flash, thinking ON: normal questions, analysis
     litellm_params:
-      model: openai/deepseek-v4.1-flash
-      api_base: os.environ/EU_API_BASE
-      api_key: os.environ/EU_API_KEY
-      extra_body: {thinking: {type: enabled}}    # <-- adjust to your host's "thinking" switch
+      model: openrouter/deepseek/deepseek-v4.1-flash-1017
+      api_key: os.environ/OPENROUTER_API_KEY
+      extra_body: {reasoning: {enabled: true}}
+    model_info: {input_cost_per_token: 0.0000003, output_cost_per_token: 0.0000012}
   - model_name: writer          # GLM-5.3: long, polished writing
     litellm_params:
-      model: openai/glm-5.3
-      api_base: os.environ/EU_API_BASE
-      api_key: os.environ/EU_API_KEY
-  - model_name: strong          # GLM-5.3 at max effort for now; swap to Kimi K3.1 Pro later
+      model: openrouter/z-ai/glm-5.3
+      api_key: os.environ/OPENROUTER_API_KEY
+    model_info: {input_cost_per_token: 0.0000014, output_cost_per_token: 0.0000044}
+  - model_name: strong          # Kimi K3.1 Pro: hardest reasoning (license still to be reviewed before selling)
     litellm_params:
-      model: openai/glm-5.3
-      api_base: os.environ/EU_API_BASE
-      api_key: os.environ/EU_API_KEY
+      model: openrouter/moonshotai/kimi-k3.1-pro
+      api_key: os.environ/OPENROUTER_API_KEY
+    model_info: {input_cost_per_token: 0.000003, output_cost_per_token: 0.000015}
 
   # --- what the user's app sees -----------------------------------------
   - model_name: auto            # the software picks the model; the user never does
@@ -40,14 +44,14 @@ model_list:
             tier: COMPLEX
           - keywords: ["analiza en profundidad", "paso a paso", "step by step"]
             tier: REASONING
-        session_affinity: true            # keep the same model for a whole chat (keeps the prompt cache warm)
+        session_affinity: true            # same model for a whole chat (keeps the prompt cache warm)
         session_affinity_ttl_seconds: 3600
       complexity_router_default_model: balanced
   - model_name: auto-think      # the "Pensar más" switch: always the strongest model
     litellm_params:
-      model: openai/glm-5.3
-      api_base: os.environ/EU_API_BASE
-      api_key: os.environ/EU_API_KEY
+      model: openrouter/moonshotai/kimi-k3.1-pro
+      api_key: os.environ/OPENROUTER_API_KEY
+    model_info: {input_cost_per_token: 0.000003, output_cost_per_token: 0.000015}
 
 litellm_settings:
   drop_params: true             # ignore params a given model doesn't support
