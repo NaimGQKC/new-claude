@@ -1,0 +1,35 @@
+version: 1.3.0
+cache: true
+
+interface:
+  modelSelect: false        # users never pick a model
+  parameters: false
+  presets: false
+
+endpoints:
+  custom:
+    - name: "LiteLLM"
+      apiKey: "${LITELLM_API_KEY}"
+      baseURL: "${LITELLM_BASE_URL}"
+      models:
+        default: ["auto", "auto-think"]
+        fetch: false
+      titleConvo: true
+      titleModel: "fast"
+      modelDisplayLabel: "Asistente"
+      customParams:
+        reasoningKey: reasoning_content   # shows the model's reasoning when it sends it
+
+modelSpecs:
+  enforce: true
+  prioritize: true
+  list:
+    - name: "asistente"
+      label: "Asistente"
+      default: true
+      description: "Responde rápido y elige solo la mejor forma de ayudarte."
+      preset: {endpoint: "LiteLLM", model: "auto"}
+    - name: "pensar-mas"
+      label: "Pensar más"
+      description: "Se toma más tiempo y razona con más cuidado."
+      preset: {endpoint: "LiteLLM", model: "auto-think"}

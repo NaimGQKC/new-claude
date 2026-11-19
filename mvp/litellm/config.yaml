@@ -1,0 +1,54 @@
+# Edit the `model:` IDs below to match what your EU host calls each model.
+# Tiers (research: DS Flash = best value, GLM = best open writer, Kimi = strongest open model).
+model_list:
+  # --- real models -------------------------------------------------------
+  - model_name: fast            # DeepSeek V4.1 Flash, thinking OFF: simple emails, rewrites, chit-chat
+    litellm_params:
+      model: openai/deepseek-v4.1-flash          # <-- host's model ID
+      api_base: os.environ/EU_API_BASE
+      api_key: os.environ/EU_API_KEY
+  - model_name: balanced        # DeepSeek V4.1 Flash, thinking ON: normal questions, analysis
+    litellm_params:
+      model: openai/deepseek-v4.1-flash
+      api_base: os.environ/EU_API_BASE
+      api_key: os.environ/EU_API_KEY
+      extra_body: {thinking: {type: enabled}}    # <-- adjust to your host's "thinking" switch
+  - model_name: writer          # GLM-5.3: long, polished writing
+    litellm_params:
+      model: openai/glm-5.3
+      api_base: os.environ/EU_API_BASE
+      api_key: os.environ/EU_API_KEY
+  - model_name: strong          # Kimi K3.1 Pro: hardest reasoning / "Pensar más"
+    litellm_params:
+      model: openai/kimi-k3.1-pro
+      api_base: os.environ/EU_API_BASE
+      api_key: os.environ/EU_API_KEY
+
+  # --- what the user's app sees -----------------------------------------
+  - model_name: auto            # the software picks the model; the user never does
+    litellm_params:
+      model: auto_router/complexity_router
+      complexity_router_config:
+        tiers:
+          SIMPLE: fast
+          MEDIUM: balanced
+          COMPLEX: writer
+          REASONING: strong
+        keyword_tier_rules:
+          - keywords: ["redacta", "escribe un informe", "write a report"]
+            tier: COMPLEX
+          - keywords: ["analiza en profundidad", "paso a paso", "step by step"]
+            tier: REASONING
+        session_affinity: true            # keep the same model for a whole chat (keeps the prompt cache warm)
+        session_affinity_ttl_seconds: 3600
+      complexity_router_default_model: balanced
+  - model_name: auto-think      # the "Pensar más" switch: always the strongest model
+    litellm_params:
+      model: openai/kimi-k3.1-pro
+      api_base: os.environ/EU_API_BASE
+      api_key: os.environ/EU_API_KEY
+
+litellm_settings:
+  drop_params: true             # ignore params a given model doesn't support
+general_settings:
+  master_key: os.environ/LITELLM_MASTER_KEY
