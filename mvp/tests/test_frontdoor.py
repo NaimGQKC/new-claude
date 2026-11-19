@@ -28,10 +28,21 @@ CASES = [
     # memory text in a system message switches the pack on too
     ([{"role": "system", "content": "Memoria: el usuario trabaja en una clínica de fisioterapia"}, {"role": "user", "content": "Redacta un recordatorio para mañana"}], "chat", "auto", ["fisioterapia"]),
 ]
+# --- cost estimates and confirmation (stateless yes/no) ---
+big = u("Analiza los riesgos de este contrato:\n" + "cláusula de pago " * 90000)      # ~360K tokens on the strong model
+d = frontdoor.decide(big)
+extra = [("huge legal doc asks first", d["action"] == "ask" and d["estimate_eur"] > 1 and "¿Quieres que continúe?" in d["ask"])]
+ask_conv = big + [{"role": "assistant", "content": d["ask"]}, {"role": "user", "content": "Sí"}]
+m2, st = frontdoor.resolve_confirmation(ask_conv); extra.append(("yes -> confirmed, original request kept", st == "confirmed" and m2 == big and frontdoor.decide(m2, True)["action"] == "chat"))
+m3, st = frontdoor.resolve_confirmation(big + [{"role": "assistant", "content": d["ask"]}, {"role": "user", "content": "no, mejor no"}]); extra.append(("no -> declined", st == "declined"))
+extra.append(("normal chat is cheap and silent", frontdoor.decide(u("Hola"))["estimate_eur"] < 0.01))
+extra.append(("image estimate shown ~0.05", 0.04 < frontdoor.decide(u("crea una imagen de un perro"))["estimate_eur"] < 0.06))
 bad = 0
+for name, ok in extra:
+    bad += not ok; print("PASS" if ok else "FAIL", "|", name)
 for msgs, act, model, pks in CASES:
     d = frontdoor.decide(msgs)
     ok = d["action"] == act and (model is None or d["model"] == model) and d["packs"] == pks
     bad += not ok
     print(("PASS" if ok else "FAIL"), "|", frontdoor.last_user(msgs)[:55].replace("\n", " "), "->", d["action"], d["model"], d["packs"], "|", d["reason"])
-print(f"\n{len(CASES) - bad}/{len(CASES)} passed"); sys.exit(1 if bad else 0)
+print(f"\n{len(CASES) + len(extra) - bad}/{len(CASES) + len(extra)} passed"); sys.exit(1 if bad else 0)

@@ -76,6 +76,7 @@ def run(question, urls=None, n_queries=4, max_pages=8, planner="strong", reader=
         progress=print, cost=None):
     cost = {} if cost is None else cost
     t0 = time.time()
+    progress("Coste estimado de esta investigación: unos 0,50 € (máximo 1 €).")
     # 1. plan
     if urls:
         queries = []

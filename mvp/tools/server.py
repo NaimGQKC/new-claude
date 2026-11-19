@@ -43,6 +43,14 @@ class H(BaseHTTPRequestHandler):
             return self._json(404, {"error": "not found"})
         self._json(200, {"status": "ok"})
 
+    def canned(self, req, text):
+        """Reply with fixed text (no model call, no cost)."""
+        if req.get("stream"):
+            self.send_response(200); self.send_header("Content-Type", "text/event-stream"); self.end_headers()
+            self.wfile.write((sse_chunk(text) + sse_chunk("", "stop") + "data: [DONE]\n\n").encode()); return
+        self._json(200, {"id": "c-1", "object": "chat.completion", "model": "asistente", "choices": [
+            {"index": 0, "message": {"role": "assistant", "content": text}, "finish_reason": "stop"}]})
+
     def passthrough(self, req, model, system="", notice=""):
         req = dict(req, model=model)
         if system:   # industry pack instructions go first
@@ -74,8 +82,14 @@ class H(BaseHTTPRequestHandler):
         msgs = req.get("messages", [])
         model = req.get("model")
         if model == "asistente":   # front door: files and images go to our tools, the rest to the cheapest fitting model
-            d = frontdoor.decide(msgs)
+            msgs, state = frontdoor.resolve_confirmation(msgs)
+            if state == "declined":
+                return self.canned(req, "De acuerdo, no lo hago. Si quieres, dime qué parte te interesa y lo hago más pequeño y barato.")
+            req = dict(req, messages=msgs)
+            d = frontdoor.decide(msgs, confirmed=(state == "confirmed"))
             frontdoor.log(d)
+            if d["action"] == "ask":
+                return self.canned(req, d["ask"])
             if d["action"] == "chat":
                 return self.passthrough(req, d["model"], d["system"], d["notice"])
             model = "crear-documento" if d["action"] == "document" else "crear-imagen"
