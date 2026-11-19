@@ -67,12 +67,20 @@ modelSpecs:
         - "Resume un documento que voy a adjuntar"
         - "Hazme una hoja de cálculo para controlar mis gastos del mes"
         - "Explícame esto con palabras sencillas: "
-      preset: {endpoint: "Herramientas", model: "asistente", modelLabel: "Asistente"}
+      preset:
+        endpoint: "Herramientas"
+        model: "asistente"
+        modelLabel: "Asistente"
+        promptPrefix: "Responde siempre en español sencillo, con frases cortas y sin jerga técnica. Sé breve: unas 3 a 6 frases, salvo que te pidan más detalle. Si hay pasos, enuméralos del 1 al 5 como máximo. Termina con una frase corta ofreciendo ayuda con el siguiente paso."
     - name: "pensar-mas"
       label: "Pensar más"
       description: "Se toma más tiempo y razona con más cuidado. Para temas difíciles."
       hideBadgeRow: true
-      preset: {endpoint: "LiteLLM", model: "auto-think", modelLabel: "Pensar más"}
+      preset:
+        endpoint: "LiteLLM"
+        model: "auto-think"
+        modelLabel: "Pensar más"
+        promptPrefix: "Responde en español sencillo y sin jerga. Razona con cuidado y explica el resultado de forma clara y ordenada, pero sin alargarte."
     - name: "investigacion"
       label: "Investigación profunda"
       description: "Busca en internet, lee muchas páginas y te da un informe con fuentes. Tarda unos minutos."

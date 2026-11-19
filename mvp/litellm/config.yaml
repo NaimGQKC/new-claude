@@ -44,8 +44,7 @@ model_list:
             tier: COMPLEX
           - keywords: ["analiza en profundidad", "paso a paso", "step by step"]
             tier: REASONING
-        session_affinity: true            # same model for a whole chat (keeps the prompt cache warm)
-        session_affinity_ttl_seconds: 3600
+        session_affinity: false           # judge every message on its own, so a chat that starts with "hola" can still get a strong model later
       complexity_router_default_model: balanced
   - model_name: auto-think      # the "Pensar más" switch: always the strongest model
     litellm_params:
