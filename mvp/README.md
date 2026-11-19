@@ -17,4 +17,4 @@ The user never picks a model. Two choices only: **Asistente** (the software pick
 - File export (PDF/Excel/Word/PPT) and memory.
 
 ## Status
-The config loads and the model IDs exist on OpenRouter. We have not yet run a live chat.
+Tested live (LiteLLM v1.110.1 in Docker + OpenRouter): the auto-router sends greetings, emails and summaries to DeepSeek Flash, long reports to GLM-5.3 and step-by-step analysis to Kimi K3.1 Pro. Cost per reply comes back in the `x-litellm-response-cost` header. LibreChat has not been run yet. Test: `python3 -I tests/route_test.py`.
