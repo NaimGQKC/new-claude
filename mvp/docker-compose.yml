@@ -9,6 +9,7 @@ services:
     ports: ["80:80", "443:443"]
     environment:
       DOMAIN: ${DOMAIN:-localhost}
+      ADMIN_HASH: "${ADMIN_HASH:?Falta ADMIN_HASH, ejecuta ./install.sh}"
     volumes:
       - ./Caddyfile:/etc/caddy/Caddyfile:ro
       - caddy_data:/data
@@ -25,7 +26,7 @@ services:
       LITELLM_API_KEY: ${LITELLM_MASTER_KEY}
       TOOLS_BASE_URL: http://tools:8000/v1
       APP_TITLE: ${APP_TITLE:-Asistente}
-      CUSTOM_FOOTER: "[Mi gasto](/gasto) · Tus datos se quedan en tu espacio"
+      CUSTOM_FOOTER: "[Privacidad](/privacidad) · Tus datos se quedan en tu espacio"
       DOMAIN_CLIENT: ${PUBLIC_URL:-http://localhost}
       DOMAIN_SERVER: ${PUBLIC_URL:-http://localhost}
     volumes:
@@ -42,10 +43,14 @@ services:
       PUBLIC_URL: ${PUBLIC_URL:-http://localhost}
       MARKUP: ${MARKUP:-0.30}
       MONTHLY_CAP_EUR: ${MONTHLY_CAP_EUR:-0}
+      STATE_DIR: /data/state
+      HOSTING_MODE: ${HOSTING_MODE:-test}
+      RETENTION_DAYS: ${RETENTION_DAYS:-90}
+      MODEL_HOSTS: ${MODEL_HOSTS:-}
       EUR_PER_USD: ${EUR_PER_USD:-0.92}
       BRAVE_API_KEY: ${BRAVE_API_KEY:-}
       FILES_DIR: /data/files
-    volumes: [tools_files:/data/files]
+    volumes: [tools_files:/data/files, tools_state:/data/state]
     expose: ["8000"]
     restart: unless-stopped
 
@@ -75,4 +80,4 @@ services:
     volumes: [pg_data:/var/lib/postgresql/data]
     restart: unless-stopped
 
-volumes: {librechat_uploads: {}, mongo_data: {}, pg_data: {}, tools_files: {}, caddy_data: {}}
+volumes: {librechat_uploads: {}, mongo_data: {}, pg_data: {}, tools_files: {}, tools_state: {}, caddy_data: {}}

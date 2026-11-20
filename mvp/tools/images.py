@@ -15,7 +15,10 @@ def generate(prompt, cost, model="image"):
     """Returns PNG bytes. Goes through the gateway so the cost lands in 'Mi gasto'."""
     if research.DRY:
         return _PNG
-    body = json.dumps({"model": model, "modalities": ["image", "text"], "messages": [{"role": "user", "content": prompt}]}).encode()
+    payload = {"model": model, "modalities": ["image", "text"], "messages": [{"role": "user", "content": prompt}]}
+    if getattr(cost, "user", None):
+        payload["user"] = cost.user
+    body = json.dumps(payload).encode()
     req = urllib.request.Request(research.GATEWAY + "/v1/chat/completions", body,
                                  {"Content-Type": "application/json", "Authorization": "Bearer " + research.KEY})
     with urllib.request.urlopen(req, timeout=300) as r:

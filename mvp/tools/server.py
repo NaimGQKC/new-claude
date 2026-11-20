@@ -7,10 +7,10 @@ import research, documents, images, usage, frontdoor
 from frontdoor import last_user, transcript
 
 GATEWAY, KEY = usage.GATEWAY, usage.KEY
-CAP_EUR = float(os.environ.get("MONTHLY_CAP_EUR", "0"))      # 0 = no cap
 
 def cap_status():
     """('over'|'near'|'ok', spent). Never blocks when the spend log can't be read."""
+    CAP_EUR = usage.get_cap()
     spent = usage.spent_eur() if CAP_EUR > 0 else None
     if spent is None: return "ok", spent
     return ("over" if spent >= CAP_EUR else "near" if spent >= 0.8 * CAP_EUR else "ok"), spent
@@ -36,8 +36,12 @@ class H(BaseHTTPRequestHandler):
     def do_GET(self):
         if self.path.rstrip("/").endswith("/models"):
             return self._json(200, {"object": "list", "data": [{"id": m, "object": "model", "owned_by": "local"} for m in ["asistente", "pensar-mas", *FLOWS]]})
+        if self.path.startswith("/privacidad"):
+            b = usage.privacy_page().encode()
+            self.send_response(200); self.send_header("Content-Type", "text/html; charset=utf-8")
+            self.send_header("Content-Length", str(len(b))); self.end_headers(); return self.wfile.write(b)
         if self.path.startswith("/gasto"):
-            b = usage.render().encode()
+            b = usage.render(saved="saved=1" in self.path).encode()
             self.send_response(200); self.send_header("Content-Type", "text/html; charset=utf-8")
             self.send_header("Content-Length", str(len(b))); self.end_headers(); return self.wfile.write(b)
         if self.path.startswith("/files/"):
@@ -58,8 +62,10 @@ class H(BaseHTTPRequestHandler):
         self._json(200, {"id": "c-1", "object": "chat.completion", "model": "asistente", "choices": [
             {"index": 0, "message": {"role": "assistant", "content": text}, "finish_reason": "stop"}]})
 
-    def passthrough(self, req, model, system="", notice=""):
+    def passthrough(self, req, model, system="", notice="", who=None):
         req = dict(req, model=model)
+        if who:
+            req["user"] = who
         if system:   # industry pack instructions go first
             msgs = list(req.get("messages", []))
             if msgs and msgs[0].get("role") == "system":
@@ -83,15 +89,27 @@ class H(BaseHTTPRequestHandler):
             self.wfile.write(chunk); self.wfile.flush()
 
     def do_POST(self):
+        if self.path.startswith("/gasto/cap"):   # admin sets the monthly limit (Caddy asks for the admin password first)
+            form = urllib.parse.parse_qs(self.rfile.read(int(self.headers.get("Content-Length", 0))).decode())
+            tok = (form.get("token") or [""])[0]
+            if tok not in usage._tokens:
+                return self._json(403, {"error": "página caducada, recárgala"})
+            usage._tokens.discard(tok)
+            try:
+                usage.set_cap((form.get("cap") or ["0"])[0].replace(",", "."))
+            except ValueError:
+                return self._json(400, {"error": "número no válido"})
+            self.send_response(303); self.send_header("Location", "/gasto?saved=1"); self.end_headers(); return
         if not self.path.endswith("/chat/completions"):
             return self._json(404, {"error": "not found"})
         req = json.loads(self.rfile.read(int(self.headers.get("Content-Length", 0))) or b"{}")
         msgs = req.get("messages", [])
         model = req.get("model")
+        who = (self.headers.get("x-user-email") or "").strip().lower() or None   # sent by LibreChat for each signed-in user
         if model in ("asistente", "pensar-mas", "deep-research", "crear-documento", "crear-imagen"):
             cap, spent = cap_status()
             if cap == "over":
-                return self.canned(req, f"Este mes has llegado al límite de gasto que fijaste ({frontdoor.fmt(CAP_EUR)}). "
+                return self.canned(req, f"Este mes has llegado al límite de gasto que fijó el administrador ({frontdoor.fmt(usage.get_cap())}). "
                                         "Para seguir, pide a la persona que administra la cuenta que lo amplíe. Tus conversaciones y archivos siguen aquí.")
         if model in ("asistente", "pensar-mas"):   # front door: files and images go to our tools, the rest to the cheapest fitting model
             msgs, state = frontdoor.resolve_confirmation(msgs)
@@ -106,8 +124,8 @@ class H(BaseHTTPRequestHandler):
                 if model == "pensar-mas":
                     d["model"] = "auto-think"
                 if cap == "near":
-                    d["notice"] += f"_Ojo: llevas {frontdoor.fmt(spent)} de tu límite mensual de {frontdoor.fmt(CAP_EUR)}._\n\n"
-                return self.passthrough(req, d["model"], d["system"], d["notice"])
+                    d["notice"] += f"_Ojo: llevas {frontdoor.fmt(spent)} de tu límite mensual de {frontdoor.fmt(usage.get_cap())}._\n\n"
+                return self.passthrough(req, d["model"], d["system"], d["notice"], who)
             model = "crear-documento" if d["action"] == "document" else "crear-imagen"
         elif model not in FLOWS:
             model = "deep-research"
@@ -116,7 +134,7 @@ class H(BaseHTTPRequestHandler):
         result = {}
 
         def work():
-            cost = {}
+            cost = research.Cost(); cost.user = who
             try:
                 result["text"] = FLOWS[model](msgs, lambda m: q.put(f"_{m}_\n\n"), cost)
             except Exception as e:

@@ -10,14 +10,21 @@ import argparse, concurrent.futures as cf, json, os, re, sys, time, urllib.parse
 
 GATEWAY = os.environ.get("GATEWAY_URL", "http://localhost:4000")
 KEY = os.environ.get("GATEWAY_KEY", "sk-test")
+class Cost(dict):
+    """stage -> USD, plus .user = who asked (sent to the gateway so spend is attributed per person)."""
+    user = None
+
 DRY = bool(os.environ.get("RESEARCH_DRY"))   # fake models, no spend
 
 # ---------- model calls -------------------------------------------------------------------
 def llm(cost, stage, model, system, user, max_tokens=6000):
     if DRY:
         return MOCK[stage](user)
-    body = json.dumps({"model": model, "max_tokens": max_tokens,
-                       "messages": [{"role": "system", "content": system}, {"role": "user", "content": user}]}).encode()
+    payload = {"model": model, "max_tokens": max_tokens,
+               "messages": [{"role": "system", "content": system}, {"role": "user", "content": user}]}
+    if getattr(cost, "user", None):
+        payload["user"] = cost.user
+    body = json.dumps(payload).encode()
     req = urllib.request.Request(GATEWAY + "/v1/chat/completions", body,
                                  {"Content-Type": "application/json", "Authorization": "Bearer " + KEY})
     with urllib.request.urlopen(req, timeout=300) as r:
@@ -48,8 +55,11 @@ SEARCH_USD = 0.008   # measured: one OpenRouter web search call, 5 results
 
 def search_openrouter(query, n, cost):
     """Built-in default: OpenRouter's web plugin, called through our gateway (no extra account or key)."""
-    body = json.dumps({"model": "fast", "max_tokens": 1, "messages": [{"role": "user", "content": query}],
-                       "extra_body": {"plugins": [{"id": "web", "max_results": n}], "reasoning": {"enabled": False}}}).encode()
+    payload = {"model": "fast", "max_tokens": 1, "messages": [{"role": "user", "content": query}],
+               "extra_body": {"plugins": [{"id": "web", "max_results": n}], "reasoning": {"enabled": False}}}
+    if getattr(cost, "user", None):
+        payload["user"] = cost.user
+    body = json.dumps(payload).encode()
     req = urllib.request.Request(GATEWAY + "/v1/chat/completions", body, {"Content-Type": "application/json", "Authorization": "Bearer " + KEY})
     data = json.load(urllib.request.urlopen(req, timeout=120))
     cost["search"] = cost.get("search", 0.0) + SEARCH_USD
@@ -103,7 +113,7 @@ def choose_depth(question):
 
 def run(question, urls=None, depth="normal", planner="strong", reader="fast", writer="strong", checker="fast",
         progress=print, cost=None):
-    cost = {} if cost is None else cost
+    cost = Cost() if cost is None else cost
     n_queries, per_query, max_pages, usd = DEPTHS[depth]
     t0 = time.time()
     progress(f"Investigación {depth}: hasta {max_pages} páginas. Coste estimado: unos {usd*1.3*0.92:.2f} €".replace(".", ",", 1) + ".")

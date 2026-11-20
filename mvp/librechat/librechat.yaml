@@ -24,6 +24,8 @@ interface:
   buildInfo: false
   temporaryChat: true         # a "chat that is not saved" option
   sharedLinks: true
+  retentionMode: all            # conversations are deleted automatically after the number of hours below
+  generalChatRetention: 720    # 30 days (set by install.sh)
 
 # Remembers useful facts about the user between chats (cheap model, runs in the background).
 memory:
@@ -39,6 +41,8 @@ endpoints:
     - name: "Herramientas"          # front door: normal chat -> model router, files -> document maker
       apiKey: "tools"
       baseURL: "${TOOLS_BASE_URL}"
+      headers:
+        x-user-email: "{{LIBRECHAT_USER_EMAIL}}"   # lets the admin see spend per person (never message content)
       models: {default: ["asistente", "pensar-mas", "deep-research", "crear-documento", "crear-imagen"], fetch: false}
       titleConvo: true
       titleModel: "asistente"

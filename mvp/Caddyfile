@@ -1,6 +1,19 @@
 # Automatic https for a real domain (set DOMAIN in .env); plain http on localhost.
 {$DOMAIN:localhost} {
+	header {
+		Strict-Transport-Security "max-age=31536000"
+		X-Content-Type-Options "nosniff"
+		X-Frame-Options "SAMEORIGIN"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		-Server
+	}
 	handle /gasto* {
+		basic_auth {
+			admin {$ADMIN_HASH}
+		}
+		reverse_proxy tools:8000
+	}
+	handle /privacidad* {
 		reverse_proxy tools:8000
 	}
 	handle /files/* {
