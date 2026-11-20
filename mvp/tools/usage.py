@@ -10,7 +10,7 @@ EUR_PER_USD = float(os.environ.get("EUR_PER_USD", "0.92"))
 
 def month_logs():
     start = time.strftime("%Y-%m-01")
-    req = urllib.request.Request(f"{GATEWAY}/spend/logs?start_date={start}&end_date={time.strftime('%Y-%m-%d', time.gmtime(time.time()+86400))}",
+    req = urllib.request.Request(f"{GATEWAY}/spend/logs?summarize=false&start_date={start}&end_date={time.strftime('%Y-%m-%d', time.gmtime(time.time()+86400))}",
                                  headers={"Authorization": "Bearer " + KEY})
     return json.load(urllib.request.urlopen(req, timeout=20))
 
